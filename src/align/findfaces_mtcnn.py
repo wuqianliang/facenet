@@ -43,8 +43,6 @@ def main(args):
             FLAGS = utils.load_tf_flags()
             facenet.load_model(FLAGS.model_dir)
             facenet.store_revision_info(src_path, output_dir, ' '.join(sys.argv))
-            #ckpt = tf.train.get_checkpoint_state(os.path.expanduser(FLAGS.model_dir))
-            #saver.restore(sess, ckpt.model_checkpoint_path)
             embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
             phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
             images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
@@ -71,17 +69,16 @@ def main(args):
                     for bbox in bounding_boxes:
                         det = bbox[0:5]
                         detect_confidence = det[4]
-                        print(det)
-                        if detect_confidence > 0.8:
-                            cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),5)
+                        if detect_confidence > 0.7:
+                            cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),2)
                             cropped = img[int(det[1]):int(det[3]),int(det[0]):int(det[2]),:]
                             cropped = cv2.resize(cropped, (160, 160), interpolation=cv2.INTER_CUBIC )
                             cv2.imshow('cropped detected face',cropped)
+                            # here can add more cropped image to set a batch to accelarate
                             cropped=cropped.reshape((1,160,160,3))
-                            print(cropped.shape)
-                            #######################a
-                            emb_dict = list(sess.run([embeddings], feed_dict={images_placeholder: np.array(cropped), phase_train_placeholder: False })[0])
-                            print(emb_dict)
+                            #######################caculate embeddings
+                            #emb_dict = list(sess.run([embeddings], feed_dict={images_placeholder: np.array(cropped), phase_train_placeholder: False })[0])
+                            #print(emb_dict)
                             #######################
                             cv2.imshow('image detected face', img)
                             k = cv2.waitKey(20)
