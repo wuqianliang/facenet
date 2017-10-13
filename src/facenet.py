@@ -496,9 +496,10 @@ def calculate_val_far(threshold, dist, actual_issame):
     return val, far
 
 def store_revision_info(src_path, output_dir, arg_string):
-  
+    print(src_path)
     # Get git hash
     gitproc = Popen(['git', 'rev-parse', 'HEAD'], stdout = PIPE, cwd=src_path)
+
     (stdout, _) = gitproc.communicate()
     git_hash = stdout.strip()
   
