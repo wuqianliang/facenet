@@ -2,24 +2,6 @@
 # MIT License
 # 
 # Copyright (c) 2017 wuqianliang@ismartearth.com
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 
 from __future__ import absolute_import
 from __future__ import division
@@ -36,6 +18,9 @@ import align.detect_face
 import random
 from time import sleep
 import cv2
+import models.inception_resnet_v1 as network
+import utils
+
 
 def main(args):
     sleep(random.random())
@@ -48,15 +33,25 @@ def main(args):
     dataset = facenet.get_dataset(args.input_dir)
     
     print('Creating networks and loading parameters')
-    
+    ###################tensorflow predictor init#############################
+    FLAGS = utils.load_tf_flags()
+    images_placeholder = tf.placeholder(tf.float32, shape=(FLAGS.batch_size, FLAGS.image_size, FLAGS.image_size, 3), name='input')
+    phase_train_placeholder = tf.placeholder(tf.bool, name='phase_train')
+    embeddings = network.inference(images_placeholder, FLAGS.pool_type, FLAGS.use_lrn, 1.0, phase_train=phase_train_placeholder)
+    ema = tf.train.ExponentialMovingAverage(1.0)
+    saver = tf.train.Saver(ema.variables_to_restore())
+    ckpt = tf.train.get_checkpoint_state(os.path.expanduser(FLAGS.model_dir))
+    saver.restore(sess, ckpt.model_checkpoint_path)
+    ###########################################################
+
     with tf.Graph().as_default():
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.gpu_memory_fraction)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
         with sess.as_default():
             pnet, rnet, onet = align.detect_face.create_mtcnn(sess, None)
     
-    minsize = 5 # minimum size of face
-    threshold = [ 0.6, 0.7, 0.7 ]  # three steps's threshold
+    minsize = 10 # minimum size of face
+    threshold = [ 0.5, 0.5, 0.7 ]  # three steps's threshold
     factor = 0.709 # scale factor
 
     # Add a random key to the filename to allow alignment using multiple processes
@@ -66,7 +61,6 @@ def main(args):
     cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
     while(cap.isOpened()):
         ret, img = cap.read()
-        #print(img)
         # Add code###########
         img = img[:,:,0:3]
         img = cv2.resize(img, (780, 364), interpolation=cv2.INTER_AREA) 
@@ -78,8 +72,14 @@ def main(args):
                 det = bbox[0:5]
                 detect_confidence = det[4]
                 print(det)
-                if detect_confidence > 0.9:
+                if detect_confidence > 0.8:
                     cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),5)
+                    cropped = img[int(det[1]):int(det[3]),int(det[0]):int(det[2]),:]
+                    cropped = cv2.resize(cropped, (96, 96), interpolation=cv2.INTER_CUBIC )
+                    cv2.imshow('cropped detected face',cropped)
+                    #######################
+                    
+                    #######################
             cv2.imshow('image detected face', img)
             k = cv2.waitKey(20)
             if (k & 0xff == ord('q')):
