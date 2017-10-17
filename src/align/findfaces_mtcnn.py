@@ -56,12 +56,15 @@ def main(args):
             random_key = np.random.randint(0, high=99999)
             bounding_boxes_filename = os.path.join(output_dir, 'bounding_boxes_%05d.txt' % random_key)
             # Read video file frame
-            cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
+            #cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
+            # start capture video
+            print('start capture video.......................................')
+            cap = cv2.VideoCapture(0)
             while(cap.isOpened()):
                 ret, img = cap.read()
                 # Add code###########
                 img = img[:,:,0:3]
-                img = cv2.resize(img, (780, 364), interpolation=cv2.INTER_AREA) 
+                #img = cv2.resize(img, (780, 364), interpolation=cv2.INTER_AREA) 
                 bounding_boxes, _ = align.detect_face.detect_face(img, minsize, pnet, rnet, onet, threshold, factor)
                 nrof_faces = bounding_boxes.shape[0]
                 if nrof_faces > 0:
@@ -69,21 +72,24 @@ def main(args):
                     for bbox in bounding_boxes:
                         det = bbox[0:5]
                         detect_confidence = det[4]
-                        if detect_confidence > 0.7:
+                        if detect_confidence > 0.8:
                             cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),2)
                             cropped = img[int(det[1]):int(det[3]),int(det[0]):int(det[2]),:]
-                            cropped = cv2.resize(cropped, (160, 160), interpolation=cv2.INTER_CUBIC )
-                            cv2.imshow('cropped detected face',cropped)
+                            try:
+                                cropped = cv2.resize(cropped, (160, 160), interpolation=cv2.INTER_CUBIC )
+                                cv2.imshow('cropped detected face',cropped)
                             # here can add more cropped image to set a batch to accelarate
-                            cropped=cropped.reshape((1,160,160,3))
+                                cropped=cropped.reshape((1,160,160,3))
+                            except:
+                                continue
                             #######################caculate embeddings
                             #emb_dict = list(sess.run([embeddings], feed_dict={images_placeholder: np.array(cropped), phase_train_placeholder: False })[0])
                             #print(emb_dict)
                             #######################
-                            cv2.imshow('image detected face', img)
-                            k = cv2.waitKey(20)
-                            if (k & 0xff == ord('q')):
-                                break
+                cv2.imshow('image detected face', img)
+                k = cv2.waitKey(20)
+                if (k & 0xff == ord('q')):
+                    break
             cap.release()
             cv2.destroyAllWindows()
 
