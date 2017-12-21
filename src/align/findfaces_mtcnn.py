@@ -21,6 +21,13 @@ import cv2
 import models.inception_resnet_v1 as network
 import utils
 
+from time import time
+_tstart_stack = []
+def tic():
+    _tstart_stack.append(time())
+def toc(fmt="Elapsed: %s s"):
+    print fmt % (time()-_tstart_stack.pop())
+
 
 def main(args):
     #sleep(random.random())
@@ -49,17 +56,16 @@ def main(args):
             ###########################################################
 
             minsize = 10 # minimum size of face
-            threshold = [ 0.5, 0.5, 0.7 ]  # three steps's threshold
+            threshold = [ 0.6, 0.7, 0.7 ]  # three steps's threshold
             factor = 0.709 # scale factor
 
             # Add a random key to the filename to allow alignment using multiple processes
             random_key = np.random.randint(0, high=99999)
-            bounding_boxes_filename = os.path.join(output_dir, 'bounding_boxes_%05d.txt' % random_key)
             # Read video file frame
-            #cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
+            cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
             # start capture video
             print('start capture video.......................................')
-            cap = cv2.VideoCapture(0)
+            #cap = cv2.VideoCapture(0)
             while(cap.isOpened()):
                 ret, img = cap.read()
                 # Add code###########
@@ -73,6 +79,9 @@ def main(args):
                         det = bbox[0:5]
                         detect_confidence = det[4]
                         if detect_confidence > 0.8:
+                            #######################################################################################
+                              
+                            #######################################################################################
                             cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),2)
                             cropped = img[int(det[1]):int(det[3]),int(det[0]):int(det[2]),:]
                             try:
@@ -83,9 +92,9 @@ def main(args):
                             except:
                                 continue
                             #######################caculate embeddings
-                            #emb_dict = list(sess.run([embeddings], feed_dict={images_placeholder: np.array(cropped), phase_train_placeholder: False })[0])
-                            #print(emb_dict)
-                            #######################
+                            emb_dict = list(sess.run([embeddings], feed_dict={images_placeholder: np.array(cropped), phase_train_placeholder: False })[0])
+                            print(emb_dict)
+                            ######################
                 cv2.imshow('image detected face', img)
                 k = cv2.waitKey(20)
                 if (k & 0xff == ord('q')):
@@ -107,6 +116,5 @@ def parse_arguments(argv):
     parser.add_argument('--gpu_memory_fraction', type=float,
         help='Upper bound on the amount of GPU memory that will be used by the process.', default=1.0)
     return parser.parse_args(argv)
-
 if __name__ == '__main__':
     main(parse_arguments(sys.argv[1:]))
