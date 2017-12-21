@@ -14,7 +14,8 @@ def imshow(fig, pic, rows=1, cols=1, pos=1):
   ax.imshow(cv2.cvtColor(pic,cv2.COLOR_BGR2RGB));
 
 def load_tf_flags():
-  FLAGS = tf.python.platform.flags._FlagValues()
+#  FLAGS = tf.python.platform.flags._FlagValues()
+  FLAGS = tf.app.flags._FlagValues()
   tf.app.flags._global_parser = argparse.ArgumentParser()
   tf.app.flags.DEFINE_string('model_dir', '/home/wuqianliang/20170512-110547',"Directory containing the graph definition and checkpoint files.")
   tf.app.flags.DEFINE_string('model_def', 'nodels.inception_resnet_v1', "Points to a module containing the definition of the inference graph.")
