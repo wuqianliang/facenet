@@ -20,6 +20,9 @@ from time import sleep
 import cv2
 import models.inception_resnet_v1 as network
 import utils
+import dlib
+from align_dlib import AlignDlib
+
 
 from time import time
 _tstart_stack = []
@@ -38,6 +41,7 @@ def main(args):
     src_path,_ = os.path.split(os.path.realpath(__file__))
 
     #dataset = facenet.get_dataset(args.input_dir)
+    align = AlignDlib('./shape_predictor_68_face_landmarks.dat')
 
     with tf.Graph().as_default():
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.gpu_memory_fraction)
@@ -62,10 +66,10 @@ def main(args):
             # Add a random key to the filename to allow alignment using multiple processes
             random_key = np.random.randint(0, high=99999)
             # Read video file frame
-            cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
+            #cap = cv2.VideoCapture('/home/wuqianliang/test/VID_20171013_121412.mp4')
             # start capture video
             print('start capture video.......................................')
-            #cap = cv2.VideoCapture(0)
+            cap = cv2.VideoCapture(0)
             while(cap.isOpened()):
                 ret, img = cap.read()
                 # Add code###########
@@ -80,13 +84,22 @@ def main(args):
                         detect_confidence = det[4]
                         if detect_confidence > 0.8:
                             #######################################################################################
-                              
+                            left    =int(bbox[0])
+                            top     =int(bbox[1])
+                            right   =int(bbox[2])
+                            bottom  =int(bbox[3])
+                            alignedFace=align.align(
+                                96,   # 96x96x3
+                                img,
+                                dlib.rectangle(left,top,right,bottom),
+                                landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
+  
                             #######################################################################################
-                            cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),2)
-                            cropped = img[int(det[1]):int(det[3]),int(det[0]):int(det[2]),:]
+                            #cv2.rectangle(img,(int(det[0]),int(det[1])),(int(det[2]),int(det[3])),(55,255,155),2)
+                            #cropped = img[int(det[1]):int(det[3]),int(det[0]):int(det[2]),:]
                             try:
-                                cropped = cv2.resize(cropped, (160, 160), interpolation=cv2.INTER_CUBIC )
-                                cv2.imshow('cropped detected face',cropped)
+                                #cropped = cv2.resize(cropped, (160, 160), interpolation=cv2.INTER_CUBIC )
+                                cv2.imshow('cropped detected face',alignedFace)
                             # here can add more cropped image to set a batch to accelarate
                                 cropped=cropped.reshape((1,160,160,3))
                             except:
