@@ -42,7 +42,7 @@ def main(args):
 
     #dataset = facenet.get_dataset(args.input_dir)
     align_dlib = AlignDlib('/home/arthur/facenet.git/trunk/src/align/shape_predictor_68_face_landmarks.dat')
-
+    DATA_BASE = "/home/arthur/caffe-master/data/lfw/";
     with tf.Graph().as_default():
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.gpu_memory_fraction)
         sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options, log_device_placement=False))
