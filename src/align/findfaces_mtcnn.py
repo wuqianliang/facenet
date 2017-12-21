@@ -29,7 +29,7 @@ _tstart_stack = []
 def tic():
     _tstart_stack.append(time())
 def toc(fmt="Elapsed: %s s"):
-    print fmt % (time()-_tstart_stack.pop())
+    print (fmt % (time()-_tstart_stack.pop()))
 
 
 def main(args):
@@ -41,7 +41,7 @@ def main(args):
     src_path,_ = os.path.split(os.path.realpath(__file__))
 
     #dataset = facenet.get_dataset(args.input_dir)
-    align = AlignDlib('./shape_predictor_68_face_landmarks.dat')
+    align = AlignDlib('/home/arthur/facenet.git/trunk/src/align/shape_predictor_68_face_landmarks.dat')
 
     with tf.Graph().as_default():
         gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.gpu_memory_fraction)
@@ -89,7 +89,7 @@ def main(args):
                             right   =int(bbox[2])
                             bottom  =int(bbox[3])
                             alignedFace=align.align(
-                                96,   # 96x96x3
+                                160,   # 96x96x3
                                 img,
                                 dlib.rectangle(left,top,right,bottom),
                                 landmarkIndices=AlignDlib.OUTER_EYES_AND_NOSE)
